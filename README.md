@@ -13,6 +13,7 @@ A RESTful ASP.NET Core 9 Web API converting numerical values between units of me
 - Structured logging via Serilog
 - Clean Architecture (Domain / Application / Infrastructure / API)
 - Unit tests with xUnit, FluentAssertions, NSubstitute - All test cases checked which help to understand the scenarios.
+- Smart suggestion engine — on category mismatch, returns all valid units the source unit can convert to
 
 ## Project Structure
 
@@ -104,3 +105,5 @@ Clean Architecture: Domain, Application, Infrastructure, and API are the four le
 Alias System: Units can be looked up by key or any alias, all case-insensitive. The repository builds a dictionary at startup for O(1) lookups.
 
 RFC 7807 Problem Details  - All errors return a consistent machine-readable format, making it easy for API consumers to handle errors programmatically.
+
+
