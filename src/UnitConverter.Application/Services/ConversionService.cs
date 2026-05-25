@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using UnitConverter.Application.DTOs;
 using UnitConverter.Application.Interfaces;
 using UnitConverter.Domain.Entities;
+using System.Linq;
 
 namespace UnitConverter.Application.Services;
 
@@ -38,8 +39,15 @@ public sealed class ConversionService
             ?? throw new ArgumentException($"Unknown unit: '{request.To}'.", nameof(request));
 
         if (fromUnit.Category != toUnit.Category)
-            throw new ArgumentException(
-                $"Cannot convert between categories: '{fromUnit.Category}' and '{toUnit.Category}'.");
+        {
+            var canConvertTo = _units.GetByCategory(fromUnit.Category)
+                .Where(u => u.Key != fromUnit.Key)
+                .Select(u => u.Key)
+                .ToList();
+            throw new CategoryMismatchException(fromUnit.Key, fromUnit.Category.ToString(), canConvertTo);
+        }
+        throw new ArgumentException(
+            $"Cannot convert between categories: '{fromUnit.Category}' and '{toUnit.Category}'.");
 
         double siValue = (request.Value * fromUnit.Factor) + fromUnit.Offset;
         double result = (siValue - toUnit.Offset) / toUnit.Factor;

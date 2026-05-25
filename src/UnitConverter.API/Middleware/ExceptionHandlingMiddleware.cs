@@ -1,6 +1,7 @@
 using System.Net;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using UnitConverter.Domain.Entities;
 
 namespace UnitConverter.API.Middleware;
 
@@ -26,6 +27,22 @@ public sealed class ExceptionHandlingMiddleware
             _logger.LogWarning("Validation failed: {Errors}", string.Join("; ", ex.Errors.Select(e => e.ErrorMessage)));
             await WriteProblemAsync(context, HttpStatusCode.BadRequest, "Validation Error",
                 string.Join(" | ", ex.Errors.Select(e => e.ErrorMessage)));
+        }
+        catch (CategoryMismatchException ex)
+        {
+            _logger.LogWarning("Category mismatch: {Message}", ex.Message);
+            context.Response.StatusCode = (int)HttpStatusCode.UnprocessableEntity;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new CategoryMismatchResponse(
+                Status: (int)HttpStatusCode.UnprocessableEntity,
+                Title: "Category Mismatch",
+                Detail: ex.Message,
+                Suggestions: new SuggestionDetails(
+                    FromUnit: ex.FromUnit,
+                    Category: ex.FromCategory,
+                    CanConvertTo: ex.CanConvertTo
+                )
+            ));
         }
         catch (ArgumentOutOfRangeException ex)
         {
@@ -62,3 +79,6 @@ public sealed class ExceptionHandlingMiddleware
         await ctx.Response.WriteAsJsonAsync(problem);
     }
 }
+
+public sealed record SuggestionDetails(string FromUnit, string Category, IReadOnlyList<string> CanConvertTo);
+public sealed record CategoryMismatchResponse(int Status, string Title, string Detail, SuggestionDetails Suggestions);
